@@ -1,0 +1,17 @@
+<?php
+function loadQueries($filePath) {
+    $queries = [];
+    $content = file_get_contents($filePath);
+    $blocks = preg_split('/--\s*name:\s*/i', $content);
+
+    foreach ($blocks as $block) {
+        if (trim($block) === '') continue;
+        $lines = explode("\n", trim($block), 2);
+        $name = trim($lines[0]);
+        $sql  = trim($lines[1]);
+        $queries[$name] = $sql;
+    }
+
+    return $queries;
+}
+?>

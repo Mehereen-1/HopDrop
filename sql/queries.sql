@@ -2,10 +2,74 @@
 INSERT INTO Users (name, phone, email, password_hash, role, address, city, availability_status)
 VALUES (:name, :phone, :email, SHA2(:password, 256), :role, :address, :city, :availability_status);
 
+-- name: login_user
+SELECT * FROM Users
+WHERE email = :email AND password_hash = :password_hash
+LIMIT 1;
+
+-- name: add_city_to_delivery_requests
+ALTER TABLE DeliveryRequests
+ADD COLUMN city VARCHAR(50) NOT NULL AFTER delivery_address;
+
+-- name: add_city_fk_to_deliveryrequests
+ALTER TABLE DeliveryRequests
+ADD COLUMN city_id INT,
+ADD CONSTRAINT fk_delivery_city
+    FOREIGN KEY (city_id)
+    REFERENCES Cities(city_id)
+    ON DELETE SET NULL;
+
+-- name: alter_deliveryrequests_receiver
+ALTER TABLE DeliveryRequests DROP FOREIGN KEY deliveryrequests_ibfk_2;
+
+
+-- name: new_fk_delivery_receiver
+ALTER TABLE DeliveryRequests 
+MODIFY receiver_id INT NULL,
+ADD CONSTRAINT fk_delivery_receiver
+FOREIGN KEY (receiver_id) REFERENCES Users(user_id)
+ON DELETE SET NULL;
+
+-- name: select_my_delivery_requests
+SELECT 
+    dr.request_id,
+    dr.pickup_address,
+    dr.delivery_address,
+    dr.package_description,
+    dr.preferred_type,
+    dr.status,
+    (
+        SELECT c.name 
+        FROM Cities c 
+        WHERE c.city_id = dr.city_id
+        LIMIT 1
+    ) AS city_name,
+    dr.created_at
+FROM DeliveryRequests dr
+WHERE dr.sender_id = :user_id
+ORDER BY dr.created_at DESC;
+
+-- name: select_delivery_request_by_id
+SELECT * FROM DeliveryRequests WHERE request_id = :request_id;
+
+-- name: delete_delivery_request
+DELETE FROM DeliveryRequests WHERE request_id = :request_id;
+
+-- name: update_delivery_request
+UPDATE DeliveryRequests
+SET pickup_address = :pickup_address,
+    delivery_address = :delivery_address,
+    city_id = :city_id,
+    package_description = :package_description,
+    preferred_type = :preferred_type
+WHERE request_id = :request_id;
+
+
 -- name: get_all_users
 SELECT user_id, name, phone, email, role, city, availability_status
 FROM Users
 ORDER BY created_at DESC;
+
 
 -- name: get_users_by_city
 SELECT user_id, name, role
@@ -19,8 +83,10 @@ FROM Users
 WHERE role = 'deliveryman' AND availability_status = 'available';
 
 -- name: insert_delivery_request
-INSERT INTO DeliveryRequests (sender_id, receiver_id, pickup_address, delivery_address, package_description, preferred_type)
-VALUES (:sender_id, :receiver_id, :pickup_address, :delivery_address, :package_description, :preferred_type);
+INSERT INTO DeliveryRequests 
+(sender_id, receiver_id, pickup_address, delivery_address, city_id, package_description, preferred_type)
+VALUES (:sender_id, :receiver_id, :pickup_address, :delivery_address, :city_id, :package_description, :preferred_type);
+
 
 -- name: get_pending_requests
 SELECT request_id, sender_id, pickup_address, delivery_address, status

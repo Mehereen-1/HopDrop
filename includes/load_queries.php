@@ -1,15 +1,19 @@
+
+
 <?php
 function loadQueries($filePath) {
     $queries = [];
-    $content = file_get_contents($filePath);
-    $blocks = preg_split('/--\s*name:\s*/i', $content);
+    $contents = file_get_contents($filePath);
 
-    foreach ($blocks as $block) {
-        if (trim($block) === '') continue;
-        $lines = explode("\n", trim($block), 2);
-        $name = trim($lines[0]);
-        $sql  = trim($lines[1]);
-        $queries[$name] = $sql;
+    // Match all query names
+    if (preg_match_all('/--\s*name:\s*(\w+)/', $contents, $names)) {
+        $parts = preg_split('/--\s*name:\s*\w+/', $contents);
+
+        foreach ($names[1] as $index => $name) {
+            $queries[$name] = trim($parts[$index + 1] ?? '');
+        }
+    } else {
+        error_log("⚠️ No named queries found in $filePath");
     }
 
     return $queries;

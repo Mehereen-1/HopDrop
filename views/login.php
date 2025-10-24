@@ -2,14 +2,18 @@
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
-include "../includes/db.php";
-include "../includes/load_queries.php";
+include "../config/db.php";
 include "../includes/run_query.php";
 
 $queries = loadQueries(__DIR__ . "/../sql/queries.sql");
 $message = "";
 
 // Handle login form submit
+
+if (isset($_GET['logout'])){
+    echo '<p class="mb-4 text-center text-green-600 font-medium">✅ You have logged out successfully.</p>';
+}
+
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $email = $_POST['email'];
     $password = $_POST['password'];

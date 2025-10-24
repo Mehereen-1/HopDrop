@@ -23,10 +23,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         'availability_status' => ($_POST['role'] === 'deliveryman' || $_POST['role'] === 'volunteer') ? 'available' : 'unavailable'
     ];
 
-    if (executeQuery($conn, $queries, 'insert_user', $params)) {
-        $message = "✅ Registration successful!";
+    $result = executeQuery($conn, $queries, "insert_user", $params);
+
+    if (is_array($result) && isset($result['error'])) {
+        $message = "❌ " . $result['error'];
     } else {
-        $message = "❌ Error during registration.";
+        $message = "✅ Registered successfully!";
     }
 }
 ?>

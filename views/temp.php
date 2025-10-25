@@ -103,7 +103,7 @@ $city = htmlspecialchars($user['city']);
         </a>
       <?php endif; ?>
 
-      <a href="rating_feed.php" class="block p-6 bg-yellow-50 hover:bg-yellow-100 rounded-2xl shadow-md transition transform hover:scale-105">
+      <a href="ratings.php" class="block p-6 bg-yellow-50 hover:bg-yellow-100 rounded-2xl shadow-md transition transform hover:scale-105">
         <h3 class="font-bold text-lg text-yellow-700 mb-2">⭐ Ratings & Feedback</h3>
         <p class="text-gray-600 text-sm">View or give feedback for completed deliveries.</p>
       </a>

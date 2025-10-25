@@ -45,7 +45,7 @@ $city = htmlspecialchars($user['city']);
                     Switch to delivery mode to start earning or volunteer to help your community!
                 </p>
                 <a href="toggle_role.php" class="inline-block bg-white text-green-600 font-semibold px-6 py-3 rounded-full shadow-lg hover:scale-105 transition transform">
-                    Become Deliveryman / Volunteer
+                    Toggle Volunteer / Paid Deliveryman
                 </a>
 
             <?php elseif ($role === 'deliveryman'): ?>
@@ -57,7 +57,7 @@ $city = htmlspecialchars($user['city']);
                     Click below to switch to volunteer mode or return to normal mode.
                 </p>
                 <a href="toggle_role.php" class="inline-block bg-white text-green-600 font-semibold px-6 py-3 rounded-full shadow-lg hover:scale-105 transition transform">
-                    Switch to Volunteer Mode
+                    Toggle Customer / Volunteer
                 </a>
 
             <?php elseif ($role === 'volunteer'): ?>
@@ -69,7 +69,7 @@ $city = htmlspecialchars($user['city']);
                     Click below to switch to paid delivery mode or return to normal mode.
                 </p>
                 <a href="toggle_role.php" class="inline-block bg-white text-green-600 font-semibold px-6 py-3 rounded-full shadow-lg hover:scale-105 transition transform">
-                    Switch to Paid Delivery Mode
+                    Toggle Paid Deliveryman / Customer
                 </a>
             <?php endif; ?>
         </div>

@@ -78,7 +78,7 @@ SELECT
     dr.created_at
 FROM DeliveryRequests dr
 LEFT JOIN Cities c ON dr.city_id = c.city_id
-WHERE dr.status = 'pending' AND (dr.preferred_type = 'paid' OR dr.preferred_type = 'volunteer')
+WHERE dr.status = 'pending' AND (dr.preferred_type = :preferred_type)
 ORDER BY dr.created_at ASC;
 
 -- name: select_available_deliveries_by_city
@@ -91,6 +91,7 @@ WHERE dr.status = 'pending'
       SELECT a.request_id 
       FROM assignments a
   )
+  AND (dr.preferred_type = :preferred_type)
   ORDER BY dr.created_at ASC;
 
 -- name: accept_delivery_request
@@ -185,7 +186,7 @@ SET role = :role
 WHERE user_id = :user_id;
 
 -- name: select_all_ratings
-SELECT r.rating_id, r.rating, r.feedback, r.created_at,
+SELECT r.*,
        ru.name AS rated_user_name, ru.city AS rated_user_city
 FROM Ratings r
 JOIN Users ru ON r.rated_user = ru.user_id
@@ -210,3 +211,105 @@ SELECT dr.request_id, dr.deliveryman_id, u.name AS deliveryman_name
 FROM DeliveryRequests dr
 JOIN Users u ON dr.deliveryman_id = u.user_id
 WHERE dr.request_id = :request_id;
+
+-- name: add_assignment_id_to_courierlocation
+ALTER TABLE courierlocation
+ADD COLUMN assignment_id INT AFTER location_id,
+ADD CONSTRAINT fk_courierlocation_assignment
+    FOREIGN KEY (assignment_id) REFERENCES assignments(assignment_id)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE;
+
+-- name: update_courierlocation
+INSERT INTO courierlocation (assignment_id, deliveryman_id, latitude, longitude, updated_at)
+VALUES (:assignment_id, :deliveryman_id, :latitude, :longitude, NOW())
+ON DUPLICATE KEY UPDATE
+latitude = :latitude,
+longitude = :longitude,
+updated_at = NOW();
+
+-- name: get_next_route_sequence
+SELECT COALESCE(MAX(sequence_no),0) AS max_seq
+FROM routes
+WHERE assignment_id = :assignment_id;
+
+-- name: insert_route_step
+INSERT INTO routes (assignment_id, sequence_no, location, latitude, longitude, status, timestamp)
+VALUES (:assignment_id, :sequence_no, :location, :latitude, :longitude, :status, NOW());
+
+-- name: select_inprogress_assignments
+SELECT assignment_id, request_id
+FROM assignments
+WHERE deliveryman_id = :deliveryman_id AND status = 'in_progress';
+
+-- name: add_unique_constraint_to_courierlocation
+ALTER TABLE courierlocation
+ADD CONSTRAINT uq_assignment UNIQUE (assignment_id);
+
+-- name: select_assignment_routes
+SELECT sequence_no, location, latitude, longitude, status, timestamp
+FROM routes
+WHERE assignment_id = :assignment_id
+ORDER BY sequence_no ASC;
+
+-- name: select_my_assignments
+SELECT a.assignment_id, a.status, u.name AS deliveryman_name
+FROM Assignments a
+LEFT JOIN Users u ON a.deliveryman_id = u.user_id
+WHERE a.deliveryman_id = :sender_id
+ORDER BY a.created_at DESC;
+
+-- name: select_all_inprogress_assignments
+SELECT a.assignment_id, a.status, u.name AS deliveryman_name
+FROM Assignments a
+LEFT JOIN Users u ON a.deliveryman_id = u.user_id
+WHERE a.status = 'in_progress'
+ORDER BY a.created_at DESC;
+
+-- name: select_routes_by_assignment
+SELECT sequence_no, location, latitude, longitude, timestamp, status
+FROM routes
+WHERE assignment_id = :assignment_id
+ORDER BY sequence_no ASC;
+
+
+-- name: select_my_delivery_requests
+SELECT d.*, a.assignment_id
+FROM DeliveryRequests d, Assignments a
+WHERE d.sender_id = :user_id AND d.request_id = a.request_id
+ORDER BY created_at DESC;
+
+
+-- name: search_ratings
+SELECT r.rating_id, r.rated_user, r.rated_by, u.name AS rated_user_name, u.city AS rated_user_city, r.rating, r.created_at
+FROM Ratings r
+JOIN Users u ON r.rated_user = u.user_id
+WHERE u.name LIKE CONCAT('%', :q, '%') OR u.city LIKE CONCAT('%', :q, '%')
+ORDER BY r.created_at DESC;
+
+
+-- name: select_live_locations
+SELECT 
+    assignment_id,
+    deliveryman_id,
+    latitude,
+    longitude,
+    'pending' AS status
+FROM currentlocation
+WHERE assignment_id IN (
+    SELECT assignment_id FROM Assignments WHERE status = 'pending'
+)
+
+UNION
+
+SELECT 
+    assignment_id,
+    deliveryman_id,
+    latitude,
+    longitude,
+    'in_progress' AS status
+FROM currentlocation
+WHERE assignment_id IN (
+    SELECT assignment_id FROM Assignments WHERE status = 'in_progress'
+);
+

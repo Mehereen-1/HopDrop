@@ -18,11 +18,14 @@ $selected_city_id = $_GET['city_id'] ?? '';
 $cities = executeQuery($conn, $queries, "select_all_cities");
 
 // Fetch available deliveries
-$params = [];
+$params = ["preferred_type" => ($_SESSION['user']['role'] === 'volunteer') ? 'volunteer' : 'paid'];
 $sql_name = "select_available_deliveries";
 if ($selected_city_id) {
     $sql_name = "select_available_deliveries_by_city"; // New query with WHERE dr.city_id = :city_id
-    $params = ["city_id" => $selected_city_id];
+    $params = [
+        "city_id" => $selected_city_id,
+        "preferred_type" => ($_SESSION['user']['role'] === 'volunteer') ? 'volunteer' : 'paid'
+    ];
 }
 
 $available_deliveries = executeQuery($conn, $queries, $sql_name, $params);

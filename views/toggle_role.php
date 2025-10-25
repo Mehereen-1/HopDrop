@@ -20,9 +20,9 @@ $tempRole = $_SESSION['user']['temp_role'] ?? 'none';
 if ($currentRole === 'volunteer') {
     $newRole = 'deliveryman';
 } elseif ($currentRole === 'deliveryman') {
-    $newRole = 'volunteer';
-} else {
     $newRole = 'customer';
+} else {
+    $newRole = 'volunteer';
 }
 
 // Update the database: store temporary role

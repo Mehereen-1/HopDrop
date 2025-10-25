@@ -319,4 +319,44 @@ WHERE a.completed_at >= DATE_SUB(NOW(), INTERVAL 30 DAY);
 
 
 
+<?php foreach ($assignments as $a): ?>
+                <div class="bg-white p-4 rounded-2xl shadow-md">
+                    <h3 class="font-semibold text-lg text-gray-800">Assignment ID: <?= htmlspecialchars($a['assignment_id']) ?></h3>
+                    <p class="text-gray-600 mb-2">Status: <?= htmlspecialchars($a['status']) ?></p>
+                    <p class="text-gray-600 mb-2">Deliveryman: <?= htmlspecialchars($a['deliveryman_name'] ?? '-') ?></p>
+                    
+                    <h4 class="font-medium text-gray-700 mb-1 mt-2">Route Progress:</h4>
+                    <?php if (!empty($routes[$a['assignment_id']])): ?>
+                        <ol class="list-decimal pl-6 space-y-1">
+                            <?php foreach ($routes[$a['assignment_id']] as $r): ?>
+                                <li>
+                                    <span class="font-medium"><?= htmlspecialchars($r['location']) ?></span>
+                                    (Lat: <?= htmlspecialchars($r['latitude']) ?>, Lng: <?= htmlspecialchars($r['longitude']) ?>)
+                                    <span class="text-sm text-gray-400">— <?= htmlspecialchars($r['timestamp']) ?></span>
+                                </li>
+                            <?php endforeach; ?>
+                        </ol>
+                    <?php else: ?>
+                        <p class="text-gray-500">No route updates yet.</p>
+                    <?php endif; ?>
+                </div>
+            <?php endforeach; ?>
 
+<!-- Trending Users -->
+    <?php if (!empty($trending_users)): ?>
+        <div class="mb-6">
+            <h3 class="text-xl font-semibold text-gray-700 mb-2">🔥 Trending Users</h3>
+            <div class="flex space-x-4 overflow-x-auto pb-2">
+                <?php foreach ($trending_users as $u): ?>
+                    <div class="bg-white p-4 rounded-xl shadow-md min-w-[200px]">
+                        <p class="font-semibold text-gray-800"><?= htmlspecialchars($u['name']) ?></p>
+                        <p class="text-sm text-gray-500"><?= htmlspecialchars($u['city']) ?></p>
+                        <p class="text-yellow-500 font-semibold">
+                            ⭐ <?= round($u['avg_rating'], 1) ?>/5
+                        </p>
+                        <p class="text-xs text-gray-400">Ratings: <?= $u['rating_count'] ?></p>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    <?php endif; ?>
